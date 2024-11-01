@@ -70,9 +70,9 @@ const GraphContainer = () => {
     setError(null);
     try {
       const [usersResponse, relationshipsResponse] = await Promise.all([
-        axios.get("${process.env.NEXT_PUBLIC_BACKEND_URL}/persons"),
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`),
         axios.get(
-          "${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to"
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to`
         ),
       ]);
 
