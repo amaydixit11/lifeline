@@ -67,36 +67,21 @@ const AddRelatedTo = () => {
 
   const handleAddRelatedTo = async () => {
     if (!fromUserId || !toUserId || !relatedTo) {
-      // toast({
-      //   title: "Validation Error",
-      //   description: "Please fill in all required fields",
-      //   variant: "destructive",
-      // });
       return;
     }
 
     const newRelatedTo = {
       startDate,
       endDate,
-      relatedTo,
+      relationship: relatedTo, // Changed from relatedTo to relationship
       level,
     };
 
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to/${fromUserId}/${toUserId}`,
-        {
-          fromId: fromUserId,
-          toId: toUserId,
-          ...newRelatedTo,
-        }
+        newRelatedTo // No need to spread additional fromId/toId since they're in the URL
       );
-
-      // toast({
-      //   title: "RelatedTo Added",
-      //   description: `RelatedTo between users established`,
-      //   variant: "default",
-      // });
 
       // Reset form
       setFromUserId("");
@@ -107,11 +92,6 @@ const AddRelatedTo = () => {
       setEndDate("");
     } catch (error) {
       console.error("Error adding relatedTo:", error);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to add relatedTo",
-      //   variant: "destructive",
-      // });
     }
   };
 
