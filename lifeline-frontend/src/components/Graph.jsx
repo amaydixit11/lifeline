@@ -11,7 +11,7 @@ const Graph = ({ users, relationships, onNodeClick }) => {
       const cleanup = createGraph(users, relationships);
       return cleanup;
     }
-  }, [users, relationships, createGraph]);
+  }, [users, relationships]);
 
   const createGraph = (userData, relationshipData) => {
     const width = window.innerWidth * 0.9;
