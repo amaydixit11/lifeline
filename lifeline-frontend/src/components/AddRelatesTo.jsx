@@ -42,6 +42,7 @@ const AddRelatedTo = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
+    console.log(loading);
     setLoading(true);
     try {
       const response = await axios.get(

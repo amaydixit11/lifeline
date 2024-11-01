@@ -32,6 +32,7 @@ const AddUser = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`,
         newUser
       );
+      console.log("Person added:", response);
 
       // toast({
       //   title: "User Added",

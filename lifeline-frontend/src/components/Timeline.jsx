@@ -16,6 +16,7 @@ const Timeline = () => {
       (_, i) => startYear + i
     );
   }, [startYear, currentYear]);
+  console.log(years);
 
   // Calculate progress percentage
   const progress = useMemo(() => {

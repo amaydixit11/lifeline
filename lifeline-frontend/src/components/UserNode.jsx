@@ -3,6 +3,7 @@
 import React from "react";
 
 const UserNode = ({ name, id }) => {
+  console.log(id);
   return (
     <div
       className="user-node"

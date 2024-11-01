@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { ZoomIn, ZoomOut, RefreshCw, Info, Link2 } from "lucide-react";
+import { ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 
 const Graph = ({ users, relationships, onNodeClick }) => {
   const svgRef = useRef(null);
@@ -11,7 +11,7 @@ const Graph = ({ users, relationships, onNodeClick }) => {
       const cleanup = createGraph(users, relationships);
       return cleanup;
     }
-  }, [users, relationships]);
+  }, [users, relationships, createGraph]);
 
   const createGraph = (userData, relationshipData) => {
     const width = window.innerWidth * 0.9;

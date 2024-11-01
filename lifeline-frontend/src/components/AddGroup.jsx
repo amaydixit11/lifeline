@@ -32,6 +32,7 @@ const AddGroup = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`,
         newGroup
       );
+      console.log(response);
 
       // toast({
       //   title: "Group Added",
