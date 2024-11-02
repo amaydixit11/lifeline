@@ -69,7 +69,7 @@ export class GroupService {
 
     try {
       const result = await this.neo4jService.runCypher(query);
-      this.logger.log(`Fetched ${result.records.length} groups`);
+      this.logger.log(`Fetched ${result} groups`);
       // return result.records.map((record) => record.get('g').properties);
       return result;
     } catch (error) {
