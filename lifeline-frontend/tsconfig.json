@@ -28,7 +28,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/components/Timeline.jsx",
-    "src/components/GraphContainer.jsx",
+    "src/components/graphComponents/GraphContainer.jsx",
     "src/app/page.jsx",
     "src/app/layout.tsx"
   ],

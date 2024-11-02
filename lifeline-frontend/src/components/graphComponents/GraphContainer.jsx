@@ -7,13 +7,39 @@ import {
   PlusCircle,
   AlertTriangle,
 } from "lucide-react";
-import Graph from "@/components/Graph";
+import Graph from "@/components/graphComponents/Graph";
 // Helper function to extract users
 const extractUsers = (data) =>
   data?.map((item) => ({
     id: item.p.properties.id,
     name: item.p.properties.name,
   })) || [];
+
+const extractGroups = (data) =>
+  data?.map((item) => ({
+    id: item.g.properties.id,
+    name: item.g.properties.name,
+  })) || [];
+
+const extractEvents = (data) =>
+  data
+    ?.map((item) => {
+      if (!item.e || !item.e.properties) {
+        console.log(
+          `item doesn't have e or properties: ${JSON.stringify(item)}`
+        );
+        return null;
+      }
+
+      return {
+        id: item.e.properties.id,
+        name: item.e.properties.name,
+        endDate: item.e.properties.endDate,
+        description: item.e.properties.description,
+        startDate: item.e.properties.startDate,
+      };
+    })
+    .filter((event) => event !== null) || [];
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -61,6 +87,8 @@ const EmptyState = ({ onAddUser }) => (
 
 const GraphContainer = () => {
   const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [events, setEvents] = useState([]);
   const [relatesTo, setRelatesTo] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,15 +97,25 @@ const GraphContainer = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersResponse, relatesToResponse] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`),
-        axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to`
-        ),
-      ]);
+      const [usersResponse, relatesToResponse, groupsResponse, eventsResponse] =
+        await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`),
+          axios.get(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to`
+          ),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/events`),
+        ]);
 
       setUsers(extractUsers(usersResponse.data));
+      setEvents(extractEvents(eventsResponse.data));
+      setGroups(extractGroups(groupsResponse.data));
       setRelatesTo(relatesToResponse.data);
+
+      console.log(usersResponse.data);
+      console.log(eventsResponse.data);
+      console.log(groupsResponse.data);
+      console.log(relatesToResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Unable to load network. Please check your connection.");
@@ -124,6 +162,8 @@ const GraphContainer = () => {
           ) : (
             <Graph
               users={users}
+              groups={groups}
+              events={events}
               relatesTo={relatesTo}
               className="w-full h-[600px]"
             />

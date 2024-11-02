@@ -3,13 +3,13 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AddUser from "@/components/AddUser";
-import AddGroup from "@/components/AddGroup";
-import AddEvent from "@/components/AddEvent";
-import AddRelatesTo from "@/components/AddRelatesTo";
-import AddMemberOf from "@/components/AddMemberOf";
-import AddInvolvedIn from "@/components/AddInvolvedIn";
-import GraphContainer from "@/components/GraphContainer";
+import AddUser from "@/components/addComponents/AddUser";
+import AddGroup from "@/components/addComponents/AddGroup";
+import AddEvent from "@/components/addComponents/AddEvent";
+import AddRelatesTo from "@/components/addComponents/AddRelatesTo";
+import AddMemberOf from "@/components/addComponents/AddMemberOf";
+import AddInvolvedIn from "@/components/addComponents/AddInvolvedIn";
+import GraphContainer from "@/components/graphComponents/GraphContainer";
 import Timeline from "@/components/Timeline";
 
 const Home = () => {
