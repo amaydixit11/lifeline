@@ -5,8 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddUser from "@/components/AddUser";
 import AddGroup from "@/components/AddGroup";
+import AddEvent from "@/components/AddEvent";
 import AddRelatesTo from "@/components/AddRelatesTo";
 import AddMemberOf from "@/components/AddMemberOf";
+import AddInvolvedIn from "@/components/AddInvolvedIn";
 import GraphContainer from "@/components/GraphContainer";
 import Timeline from "@/components/Timeline";
 
@@ -42,8 +44,9 @@ const Home = () => {
             <Card className="h-full p-4 bg-gray-800 border-gray-700 overflow-auto">
               <AddUser />
               <div className="h-8"></div>
-
               <AddGroup />
+              <div className="h-8"></div>
+              <AddEvent />
             </Card>
           </TabsContent>
 
@@ -55,6 +58,8 @@ const Home = () => {
               <AddRelatesTo />
               <div className="h-2"></div>
               <AddMemberOf />
+              <div className="h-2"></div>
+              <AddInvolvedIn />
             </Card>
           </TabsContent>
         </Tabs>
