@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
@@ -11,127 +9,117 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { toast } from "@/components/ui/toaster";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
-const extractUsers = (data) =>
+const extractNodes = (data) =>
   data?.map((item) => ({
     id: item.p.properties.id,
     name: item.p.properties.name,
   })) || [];
 
 const MemberOfTypes = [
-  "Friend",
-  "Family",
-  "Colleague",
-  "Mentor",
-  "Mentee",
-  "Partner",
-  "Associate",
+  "Core Member",
+  "Regular Member",
+  "Associate Member",
+  "Honorary Member",
+  "Administrator",
+  "Moderator",
+  "Contributor",
+  "Observer",
 ];
 
 const AddMemberOf = () => {
-  const [users, setUsers] = useState([]);
-  const [fromUserId, setFromUserId] = useState("");
-  const [toUserId, setToUserId] = useState("");
-  const [memberOf, setMemberOf] = useState("");
-  const [level, setLevel] = useState(50);
+  const [groups, setGroups] = useState([]);
+  const [persons, setPersons] = useState([]);
+  const [groupId, setGroupId] = useState("");
+  const [personId, setPersonId] = useState("");
+  const [memberType, setMemberType] = useState("");
+  const [participationLevel, setParticipationLevel] = useState(50);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
-    console.log(loading);
+  const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`
       );
-      setUsers(extractUsers(response.data));
+      setGroups(extractNodes(response.data));
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchPersons = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`
+      );
+      setPersons(extractNodes(response.data));
     } catch (error) {
       console.error("Error fetching persons:", error);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to load users",
-      //   variant: "destructive",
-      // });
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchGroups();
+    fetchPersons();
+  }, [fetchGroups, fetchPersons]);
 
   const handleAddMemberOf = async () => {
-    if (!fromUserId || !toUserId || !memberOf) {
-      // toast({
-      //   title: "Validation Error",
-      //   description: "Please fill in all required fields",
-      //   variant: "destructive",
-      // });
+    if (!groupId || !personId || !memberType) {
       return;
     }
 
-    const newMemberOf = {
+    const membershipData = {
       startDate,
       endDate,
-      memberOf,
-      level,
+      membershipType: memberType,
+      participationLevel,
     };
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to/${fromUserId}/${toUserId}`,
-        {
-          fromId: fromUserId,
-          toId: toUserId,
-          ...newMemberOf,
-        }
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/member-of/${groupId}/${personId}`,
+        membershipData
       );
 
-      // toast({
-      //   title: "MemberOf Added",
-      //   description: `MemberOf between users established`,
-      //   variant: "default",
-      // });
-
       // Reset form
-      setFromUserId("");
-      setToUserId("");
-      setMemberOf("");
-      setLevel(50);
+      setGroupId("");
+      setPersonId("");
+      setMemberType("");
+      setParticipationLevel(50);
       setStartDate("");
       setEndDate("");
     } catch (error) {
-      console.error("Error adding memberOf:", error);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to add memberOf",
-      //   variant: "destructive",
-      // });
+      console.error("Error adding membership:", error);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add MemberOf</CardTitle>
+        <CardTitle>Add Group Membership</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block mb-2">From User</label>
-            <Select value={fromUserId} onValueChange={setFromUserId}>
+            <label className="block mb-2">Group</label>
+            <Select value={groupId} onValueChange={setGroupId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select From User" />
+                <SelectValue placeholder="Select Group" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -139,15 +127,15 @@ const AddMemberOf = () => {
           </div>
 
           <div>
-            <label className="block mb-2">To User</label>
-            <Select value={toUserId} onValueChange={setToUserId}>
+            <label className="block mb-2">Person</label>
+            <Select value={personId} onValueChange={setPersonId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select To User" />
+                <SelectValue placeholder="Select Person" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                {persons.map((person) => (
+                  <SelectItem key={person.id} value={person.id}>
+                    {person.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -156,10 +144,10 @@ const AddMemberOf = () => {
         </div>
 
         <div>
-          <label className="block mb-2">MemberOf Type</label>
-          <Select value={memberOf} onValueChange={setMemberOf}>
+          <label className="block mb-2">Membership Type</label>
+          <Select value={memberType} onValueChange={setMemberType}>
             <SelectTrigger>
-              <SelectValue placeholder="Select MemberOf" />
+              <SelectValue placeholder="Select Membership Type" />
             </SelectTrigger>
             <SelectContent>
               {MemberOfTypes.map((type) => (
@@ -172,12 +160,14 @@ const AddMemberOf = () => {
         </div>
 
         <div>
-          <label className="block mb-2">MemberOf Strength ({level}%)</label>
+          <label className="block mb-2">
+            Participation Level ({participationLevel}%)
+          </label>
           <Slider
             defaultValue={[50]}
             max={100}
             step={1}
-            onValueChange={(value) => setLevel(value[0])}
+            onValueChange={(value) => setParticipationLevel(value[0])}
           />
         </div>
 
@@ -204,8 +194,9 @@ const AddMemberOf = () => {
         <Button
           onClick={handleAddMemberOf}
           className="w-full bg-blue-600 hover:bg-blue-700"
+          disabled={loading}
         >
-          Add MemberOf
+          {loading ? "Processing..." : "Add Membership"}
         </Button>
       </CardContent>
     </Card>

@@ -15,12 +15,13 @@ export class EventService {
 
   async create(createEventDto: CreateEventDto): Promise<Event> {
     const query = `
-      CREATE (e:Event {id: $id, description: $description, startDate: $startDate, endDate: $endDate})
+      CREATE (e:Event {id: $id, name: $name, description: $description, startDate: $startDate, endDate: $endDate})
       RETURN e
     `;
 
     const params = {
       id: createEventDto.id,
+      name: createEventDto.name,
       description: createEventDto.description,
       startDate: createEventDto.startDate,
       endDate: createEventDto.endDate,
@@ -28,7 +29,7 @@ export class EventService {
 
     try {
       const result = await this.neo4jService.runCypher(query, params);
-      return result.records[0].get('e').properties;
+      return result;
     } catch (error) {
       throw new InternalServerErrorException('Failed to create event');
     }
@@ -58,7 +59,7 @@ export class EventService {
 
     try {
       const result = await this.neo4jService.runCypher(query);
-      return result.records.map((record) => record.get('e').properties);
+      return result;
     } catch (error) {
       throw new InternalServerErrorException('Failed to fetch events');
     }

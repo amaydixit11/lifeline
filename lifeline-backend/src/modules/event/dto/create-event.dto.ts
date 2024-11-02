@@ -7,6 +7,9 @@ export class CreateEventDto {
   id: string; // Unique identifier for the event
 
   @IsNotEmpty()
+  name: string; // Description of the event
+
+  @IsNotEmpty()
   description: string; // Description of the event
 
   @IsNotEmpty()

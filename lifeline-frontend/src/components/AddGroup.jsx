@@ -5,19 +5,27 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { toast } from "@/components/ui/toaster";
+// import { toast } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
+
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Users } from "lucide-react";
 
 const AddGroup = () => {
   const [groupName, setGroupName] = useState("");
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleAddGroup = async () => {
+  const handleAddGroup = async (e) => {
+    e.preventDefault();
+
     if (!groupName.trim()) {
-      // toast({
-      //   title: "Validation Error",
-      //   description: "Please enter a valid name",
-      //   variant: "destructive",
-      // });
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid name",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -32,49 +40,64 @@ const AddGroup = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`,
         newGroup
       );
-      console.log(response);
 
-      // toast({
-      //   title: "Group Added",
-      //   description: `${groupName} has been added to the network`,
-      //   variant: "default",
-      // });
+      toast({
+        title: "Success",
+        description: `${groupName} has been added to the network`,
+        variant: "default",
+      });
 
-      setGroupName(""); // Clear input field after adding
+      setGroupName("");
     } catch (error) {
-      console.error("Error adding group:", error);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to add group. Please try again.",
-      //   variant: "destructive",
-      // });
+      toast({
+        title: "Error",
+        description: "Failed to add group. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex space-x-2">
-        <Input
-          type="text"
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-          placeholder="Enter group's name"
-          className="flex-grow"
-        />
-        <Button
-          onClick={handleAddGroup}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {loading ? "Adding..." : "Add Group"}
-        </Button>
-      </div>
-      <p className="text-sm text-gray-400">
-        Enter a unique name for the group you want to add to the network.
-      </p>
-    </div>
+    <Card className="bg-gray-800 border-gray-700">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Add Group
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleAddGroup} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="groupName" className="text-sm text-gray-200">
+              Group Name
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="groupName"
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group's name"
+                className="flex-grow bg-gray-700 border-gray-600 text-white"
+                disabled={loading}
+              />
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {loading ? "Adding..." : "Add"}
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-gray-400">
+            Enter a unique name for the group you want to add to the network.
+          </p>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

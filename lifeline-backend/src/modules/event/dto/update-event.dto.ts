@@ -5,6 +5,10 @@ import { IsOptional, IsString } from 'class-validator';
 export class UpdateEventDto {
   @IsOptional()
   @IsString()
+  name?: string; // Name of the event
+
+  @IsOptional()
+  @IsString()
   description?: string; // Description of the event
 
   @IsOptional()

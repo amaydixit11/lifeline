@@ -1,17 +1,40 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { ZoomIn, ZoomOut, RefreshCw, Info, Lock, Unlock } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const Graph = ({ users, relationships, onNodeClick }) => {
+const Graph = ({ users, relationships, onNodeClick, title, description }) => {
   const svgRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isLocked, setIsLocked] = useState(false);
+  const [legendVisible, setLegendVisible] = useState(true);
+
+  // Relationship types and their colors
+  const relationshipConfig = {
+    Friend: { color: "#4CAF50", icon: "👥" },
+    Colleague: { color: "#2196F3", icon: "💼" },
+    Family: { color: "#FF5722", icon: "❤️" },
+    default: { color: "#9E9E9E", icon: "🔗" },
+  };
 
   useEffect(() => {
     if (users.length > 0) {
       const cleanup = createGraph(users, relationships);
       return cleanup;
     }
-  }, [users, relationships]);
+  }, [users, relationships, isLocked]);
 
   const createGraph = (userData, relationshipData) => {
     const width = window.innerWidth * 0.9;
@@ -40,9 +63,9 @@ const Graph = ({ users, relationships, onNodeClick }) => {
 
     // Color palette for relationships
     const relationshipColors = {
-      friend: "#4CAF50",
-      colleague: "#2196F3",
-      family: "#FF5722",
+      Friend: "#4CAF50",
+      Colleague: "#2196F3",
+      Family: "#FF5722",
       default: "#9E9E9E",
     };
 
@@ -114,8 +137,13 @@ const Graph = ({ users, relationships, onNodeClick }) => {
       .force("link", d3.forceLink(edges).distance(200))
       .force("charge", d3.forceManyBody().strength(-300))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(80))
-      .on("tick", ticked);
+      .force("collision", d3.forceCollide().radius(80));
+
+    if (!isLocked) {
+      simulation.on("tick", ticked);
+    } else {
+      simulation.stop();
+    }
 
     // Create node groups
     const nodeGroups = svgContainer
@@ -275,46 +303,135 @@ const Graph = ({ users, relationships, onNodeClick }) => {
     }
   };
 
+  const handleZoom = (delta) => {
+    const newZoom = Math.max(0.5, Math.min(5, zoomLevel + delta));
+    d3.select(svgRef.current).call(
+      d3.zoom().transform,
+      d3.zoomIdentity.scale(newZoom)
+    );
+    setZoomLevel(newZoom);
+  };
+
   return (
-    <div className="relative bg-gray-100 rounded-lg shadow-lg p-4">
-      <div className="absolute top-2 right-2 z-10 flex space-x-2">
-        <button
-          className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition"
-          onClick={() => {
-            const currentZoom = zoomLevel;
-            d3.select(svgRef.current).call(
-              d3.zoom().transform,
-              d3.zoomIdentity.scale(Math.min(currentZoom + 0.2, 5))
-            );
-          }}
-        >
-          <ZoomIn size={20} />
-        </button>
-        <button
-          className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition"
-          onClick={() => {
-            const currentZoom = zoomLevel;
-            d3.select(svgRef.current).call(
-              d3.zoom().transform,
-              d3.zoomIdentity.scale(Math.max(currentZoom - 0.2, 0.5))
-            );
-          }}
-        >
-          <ZoomOut size={20} />
-        </button>
-        <button
-          className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition"
-          onClick={resetGraph}
-        >
-          <RefreshCw size={20} />
-        </button>
-      </div>
-      <div
-        id="tooltip"
-        className="absolute opacity-0 bg-white text-black border rounded shadow-lg p-3 pointer-events-none max-w-xs"
-      ></div>
-      <div ref={svgRef} className="mt-4 w-full h-[80vh]"></div>
-    </div>
+    <Card className="w-full h-full bg-white">
+      <CardHeader className="space-y-1">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-2xl font-bold">
+              {title || "Network Graph"}
+            </CardTitle>
+            {description && (
+              <CardDescription className="text-sm text-gray-500">
+                {description}
+              </CardDescription>
+            )}
+          </div>
+          <div className="flex space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition"
+                    onClick={() => handleZoom(0.2)}
+                  >
+                    <ZoomIn size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Zoom In</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition"
+                    onClick={() => handleZoom(-0.2)}
+                  >
+                    <ZoomOut size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Zoom Out</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition"
+                    onClick={() => setIsLocked(!isLocked)}
+                  >
+                    {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isLocked ? "Unlock Graph" : "Lock Graph"}
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition"
+                    onClick={() => {
+                      setZoomLevel(1);
+                      createGraph(users, relationships);
+                    }}
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Reset Graph</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition"
+                    onClick={() => setLegendVisible(!legendVisible)}
+                  >
+                    <Info size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Toggle Legend</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="relative p-0">
+        {/* Legend */}
+        {legendVisible && (
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
+            <h3 className="font-semibold mb-2">Relationship Types</h3>
+            <div className="space-y-2">
+              {Object.entries(relationshipConfig).map(
+                ([type, { color, icon }]) => (
+                  <div key={type} className="flex items-center space-x-2">
+                    <span
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span>{icon}</span>
+                    <span>{type}</span>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tooltip */}
+        <div
+          id="tooltip"
+          className="absolute opacity-0 bg-white/90 backdrop-blur-sm text-black border rounded-lg shadow-lg p-4 pointer-events-none max-w-xs z-20"
+        />
+
+        {/* Graph */}
+        <div
+          ref={svgRef}
+          className="w-full h-[calc(100vh-12rem)] bg-gray-50/50"
+        />
+      </CardContent>
+    </Card>
   );
 };
 
