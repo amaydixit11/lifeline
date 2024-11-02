@@ -6,7 +6,7 @@ import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // import { toast } from "@/components/ui/toast";
-import { usetoast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -80,6 +80,7 @@ const AddEvent = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/events`,
         newEvent
       );
+      console.log(response);
 
       toast({
         title: "Success",

@@ -38,6 +38,7 @@ const AddUser = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`,
         newUser
       );
+      console.log("Person added:", response);
 
       toast({
         title: "Success",
@@ -49,7 +50,7 @@ const AddUser = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add user. Please try again.",
+        description: `Failed to add user. Please try again. ${error}`,
         variant: "destructive",
       });
     } finally {
@@ -69,7 +70,7 @@ const AddUser = () => {
         <form onSubmit={handleAddUser} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="userName" className="text-sm text-gray-200">
-              Person's Name
+              Persons Name
             </Label>
             <div className="flex gap-2">
               <Input
@@ -77,7 +78,7 @@ const AddUser = () => {
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder="Enter person's name"
+                placeholder="Enter persons name"
                 className="flex-grow bg-gray-700 border-gray-600 text-white"
                 disabled={loading}
               />

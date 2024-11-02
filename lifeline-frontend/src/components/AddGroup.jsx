@@ -40,6 +40,7 @@ const AddGroup = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`,
         newGroup
       );
+      console.log("Group added:", response);
 
       toast({
         title: "Success",
@@ -51,7 +52,7 @@ const AddGroup = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add group. Please try again.",
+        description: `Failed to add group. Please try again. ${error}`,
         variant: "destructive",
       });
     } finally {

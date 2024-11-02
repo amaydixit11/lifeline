@@ -296,12 +296,12 @@ const Graph = ({ users, relationships, onNodeClick, title, description }) => {
     };
   };
 
-  const resetGraph = () => {
-    if (svgRef.current) {
-      d3.select(svgRef.current).selectAll("*").remove();
-      createGraph(users, relationships);
-    }
-  };
+  // const resetGraph = () => {
+  //   if (svgRef.current) {
+  //     d3.select(svgRef.current).selectAll("*").remove();
+  //     createGraph(users, relationships);
+  //   }
+  // };
 
   const handleZoom = (delta) => {
     const newZoom = Math.max(0.5, Math.min(5, zoomLevel + delta));
