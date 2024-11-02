@@ -61,7 +61,7 @@ const EmptyState = ({ onAddUser }) => (
 
 const GraphContainer = () => {
   const [users, setUsers] = useState([]);
-  const [relationships, setRelationships] = useState([]);
+  const [relatesTo, setRelatesTo] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -69,7 +69,7 @@ const GraphContainer = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersResponse, relationshipsResponse] = await Promise.all([
+      const [usersResponse, relatesToResponse] = await Promise.all([
         axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`),
         axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to`
@@ -77,7 +77,7 @@ const GraphContainer = () => {
       ]);
 
       setUsers(extractUsers(usersResponse.data));
-      setRelationships(relationshipsResponse.data);
+      setRelatesTo(relatesToResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Unable to load network. Please check your connection.");
@@ -124,7 +124,7 @@ const GraphContainer = () => {
           ) : (
             <Graph
               users={users}
-              relationships={relationships}
+              relatesTo={relatesTo}
               className="w-full h-[600px]"
             />
           )}

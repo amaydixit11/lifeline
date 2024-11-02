@@ -15,7 +15,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const Graph = ({ users, relationships, onNodeClick, title, description }) => {
+const Graph = ({
+  users,
+  groups,
+  events,
+  relatesTo,
+  onNodeClick,
+  title,
+  description,
+}) => {
   const svgRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLocked, setIsLocked] = useState(false);
@@ -31,10 +39,10 @@ const Graph = ({ users, relationships, onNodeClick, title, description }) => {
 
   useEffect(() => {
     if (users.length > 0) {
-      const cleanup = createGraph(users, relationships);
+      const cleanup = createGraph(users, relatesTo);
       return cleanup;
     }
-  }, [users, relationships, isLocked]);
+  }, [users, relatesTo, isLocked]);
 
   const createGraph = (userData, relationshipData) => {
     const width = window.innerWidth * 0.9;
@@ -61,7 +69,7 @@ const Graph = ({ users, relationships, onNodeClick, title, description }) => {
 
     const svgContainer = svg.append("g");
 
-    // Color palette for relationships
+    // Color palette for relatesTo
     const relationshipColors = {
       Friend: "#4CAF50",
       Colleague: "#2196F3",
@@ -299,7 +307,7 @@ const Graph = ({ users, relationships, onNodeClick, title, description }) => {
   // const resetGraph = () => {
   //   if (svgRef.current) {
   //     d3.select(svgRef.current).selectAll("*").remove();
-  //     createGraph(users, relationships);
+  //     createGraph(users, relatesTo);
   //   }
   // };
 
@@ -372,7 +380,7 @@ const Graph = ({ users, relationships, onNodeClick, title, description }) => {
                     className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition"
                     onClick={() => {
                       setZoomLevel(1);
-                      createGraph(users, relationships);
+                      createGraph(users, relatesTo);
                     }}
                   >
                     <RefreshCw size={18} />
