@@ -33,6 +33,7 @@ const Graph = ({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLocked, setIsLocked] = useState(false);
   const [legendVisible, setLegendVisible] = useState(true);
+  const [selectedNodeInfo, setSelectedNodeInfo] = useState(null);
 
   useEffect(() => {
     if (users.length > 0 || groups.length > 0 || events.length > 0) {
@@ -184,31 +185,28 @@ const Graph = ({
       .attr("stroke-width", 4)
       .attr("filter", "url(#drop-shadow)");
 
-    // Show tooltip
-    const tooltip = d3.select("#tooltip");
-    tooltip.transition().duration(200).style("opacity", 1);
-
+    // Get connections for this node
     const connections = relatesTo.filter(
       (rel) => rel.a.properties.id === d.id || rel.b.properties.id === d.id
     );
 
-    tooltip
-      .html(
-        `
-        <div class="font-semibold text-lg mb-2">${d.name}</div>
-        <div class="text-sm">
-          <div class="mb-1">Type: ${
-            d.type.charAt(0).toUpperCase() + d.type.slice(1)
-          }</div>
-          <div class="mb-1">Connections: ${connections.length}</div>
-          ${Object.entries(d.metadata || {})
-            .map(([key, value]) => `<div class="mb-1">${key}: ${value}</div>`)
-            .join("")}
-        </div>
-      `
-      )
-      .style("left", `${event.pageX + 10}px`)
-      .style("top", `${event.pageY - 10}px`);
+    // Update the fixed info panel content
+    d3.select("#node-info-title").text(d.name || "Node Info");
+    d3.select("#node-info-content").html(`
+      <div class="mb-1">Type: ${
+        d.type.charAt(0).toUpperCase() + d.type.slice(1)
+      }</div>
+      <div class="mb-1">Connections: ${connections.length}</div>
+      ${Object.entries(d.metadata || {})
+        .map(([key, value]) => `<div class="mb-1">${key}: ${value}</div>`)
+        .join("")}
+    `);
+    setSelectedNodeInfo({
+      name: d.name,
+      type: d.type.charAt(0).toUpperCase() + d.type.slice(1),
+      connections: connections.length,
+      metadata: d.metadata || {},
+    });
   };
 
   const handleNodeMouseOut = (event) => {
@@ -277,7 +275,35 @@ const Graph = ({
           ref={svgRef}
           className="w-full h-[calc(100vh-12rem)] bg-gradient-to-br from-gray-50/50 to-white/30"
         />
-
+        {/* Fixed Node Info Panel */}
+        <div
+          id="node-info"
+          className="absolute right-4 top-4 bg-white/95 backdrop-blur-sm text-gray-900 border border-gray-100 rounded-xl shadow-lg p-4 pointer-events-none max-w-xs z-20 transition-all duration-200"
+        >
+          {selectedNodeInfo ? (
+            <>
+              <p className="font-semibold text-lg">{selectedNodeInfo.name}</p>
+              <p className="text-sm text-gray-500">
+                Type: {selectedNodeInfo.type}
+              </p>
+              <p className="text-sm text-gray-500">
+                Connections: {selectedNodeInfo.connections}
+              </p>
+              {selectedNodeInfo.metadata &&
+                Object.entries(selectedNodeInfo.metadata).map(
+                  ([key, value]) => (
+                    <p key={key} className="text-sm text-gray-500">
+                      {key}: {value}
+                    </p>
+                  )
+                )}
+            </>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Hover over a node to see details
+            </p>
+          )}
+        </div>
         <GraphStats
           users={users}
           groups={groups}
