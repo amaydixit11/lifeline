@@ -74,7 +74,7 @@ export class RelationshipService {
       this.logger.log(
         `Created MEMBER_OF relationship for user ${userId} in group ${groupId}`,
       );
-      return result.records[0].get('r').properties;
+      return result;
     } catch (error) {
       this.logger.error('Failed to create MEMBER_OF relationship', error.stack);
       throw new InternalServerErrorException(
@@ -384,6 +384,46 @@ export class RelationshipService {
       );
       throw new InternalServerErrorException(
         'Failed to retrieve MEMBER_OF relationship',
+      );
+    }
+  }
+
+  async getAllMemberOf() {
+    const query = `
+      MATCH (u:Person)-[r:MEMBER_OF]->(g:Group)
+      RETURN u, g, r
+    `;
+
+    try {
+      const result = await this.neo4jService.runCypher(query);
+      this.logger.log(`Neo4j query result: ${JSON.stringify(result)}`);
+
+      if (result && result.length > 0) {
+        this.logger.log(`Retrieved all MEMBER_OF relationships`);
+        this.logger.log(`Results: ${JSON.stringify(result)}`);
+        result.forEach((rel) => {
+          const startNode = rel.u.properties;
+          const endNode = rel.g.properties;
+          const relationship = rel.r.properties;
+
+          this.logger.log(`Each Result: ${JSON.stringify(rel)}`);
+          this.logger.log(
+            `Relationship from ${startNode.name} to ${endNode.name}:`,
+            relationship,
+          );
+        });
+        return result;
+      } else {
+        this.logger.warn(`No MEMBER_OF relationships found`);
+        return []; // Return an empty array if no relationships are found
+      }
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve MEMBER_OF relationships',
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to retrieve MEMBER_OF relationships',
       );
     }
   }

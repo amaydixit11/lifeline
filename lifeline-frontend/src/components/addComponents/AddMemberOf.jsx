@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
 
 const extractNodes = (data) =>
   data?.map((item) => ({
@@ -18,24 +17,11 @@ const extractNodes = (data) =>
     name: item.p.properties.name,
   })) || [];
 
-const MemberOfTypes = [
-  "Core Member",
-  "Regular Member",
-  "Associate Member",
-  "Honorary Member",
-  "Administrator",
-  "Moderator",
-  "Contributor",
-  "Observer",
-];
-
 const AddMemberOf = () => {
   const [groups, setGroups] = useState([]);
   const [persons, setPersons] = useState([]);
   const [groupId, setGroupId] = useState("");
   const [personId, setPersonId] = useState("");
-  const [memberType, setMemberType] = useState("");
-  const [participationLevel, setParticipationLevel] = useState(50);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,15 +60,13 @@ const AddMemberOf = () => {
   }, [fetchGroups, fetchPersons]);
 
   const handleAddMemberOf = async () => {
-    if (!groupId || !personId || !memberType) {
+    if (!groupId || !personId) {
       return;
     }
 
     const membershipData = {
       startDate,
       endDate,
-      membershipType: memberType,
-      participationLevel,
     };
 
     try {
@@ -94,8 +78,6 @@ const AddMemberOf = () => {
       // Reset form
       setGroupId("");
       setPersonId("");
-      setMemberType("");
-      setParticipationLevel(50);
       setStartDate("");
       setEndDate("");
     } catch (error) {
@@ -141,34 +123,6 @@ const AddMemberOf = () => {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div>
-          <label className="block mb-2">Membership Type</label>
-          <Select value={memberType} onValueChange={setMemberType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Membership Type" />
-            </SelectTrigger>
-            <SelectContent>
-              {MemberOfTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="block mb-2">
-            Participation Level ({participationLevel}%)
-          </label>
-          <Slider
-            defaultValue={[50]}
-            max={100}
-            step={1}
-            onValueChange={(value) => setParticipationLevel(value[0])}
-          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

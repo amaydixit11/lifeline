@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
@@ -11,7 +9,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { toast } from "@/components/ui/toaster";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
@@ -22,13 +19,13 @@ const extractUsers = (data) =>
   })) || [];
 
 const RelatedToTypes = [
+  "Other",
   "Friend",
-  "Family",
-  "Colleague",
-  "Mentor",
-  "Mentee",
-  "Partner",
-  "Associate",
+  "BF/GF",
+  "Crush",
+  "Simping",
+  "Church",
+  "Goons",
 ];
 
 const AddRelatedTo = () => {
@@ -36,6 +33,7 @@ const AddRelatedTo = () => {
   const [fromUserId, setFromUserId] = useState("");
   const [toUserId, setToUserId] = useState("");
   const [relatedTo, setRelatedTo] = useState("");
+  const [customRelatedTo, setCustomRelatedTo] = useState("");
   const [level, setLevel] = useState(50);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -51,11 +49,6 @@ const AddRelatedTo = () => {
       setUsers(extractUsers(response.data));
     } catch (error) {
       console.error("Error fetching persons:", error);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to load users",
-      //   variant: "destructive",
-      // });
     } finally {
       setLoading(false);
     }
@@ -65,28 +58,41 @@ const AddRelatedTo = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Reset customRelatedTo when relatedTo changes to something other than "Other"
+  useEffect(() => {
+    if (relatedTo !== "Other") {
+      setCustomRelatedTo("");
+    }
+  }, [relatedTo]);
+
   const handleAddRelatedTo = async () => {
-    if (!fromUserId || !toUserId || !relatedTo) {
+    if (
+      !fromUserId ||
+      !toUserId ||
+      !relatedTo ||
+      (relatedTo === "Other" && !customRelatedTo)
+    ) {
       return;
     }
 
     const newRelatedTo = {
       startDate,
       endDate,
-      relationship: relatedTo, // Changed from relatedTo to relationship
+      relationship: relatedTo === "Other" ? customRelatedTo : relatedTo,
       level,
     };
 
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to/${fromUserId}/${toUserId}`,
-        newRelatedTo // No need to spread additional fromId/toId since they're in the URL
+        newRelatedTo
       );
 
       // Reset form
       setFromUserId("");
       setToUserId("");
       setRelatedTo("");
+      setCustomRelatedTo("");
       setLevel(50);
       setStartDate("");
       setEndDate("");
@@ -150,6 +156,18 @@ const AddRelatedTo = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {relatedTo === "Other" && (
+          <div>
+            <label className="block mb-2">Custom RelatedTo Type</label>
+            <Input
+              type="text"
+              value={customRelatedTo}
+              onChange={(e) => setCustomRelatedTo(e.target.value)}
+              placeholder="Enter custom relationship type"
+            />
+          </div>
+        )}
 
         <div>
           <label className="block mb-2">RelatedTo Strength ({level}%)</label>

@@ -285,6 +285,22 @@ export class RelationshipController {
     }
   }
 
+  @Get('member-of/')
+  async getAllMemberOf() {
+    this.logger.log(`Retrieving all MEMBER_OF relationships`);
+    try {
+      return await this.relationshipService.getAllMemberOf();
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve MEMBER_OF relationships`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to retrieve MEMBER_OF relationships',
+      );
+    }
+  }
+
   // Get MEMBER_OF relationship
   @Get('member-of/:userId/:groupId')
   async getMemberOf(

@@ -8,6 +8,11 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Graph from "@/components/graphComponents/Graph";
+
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
 // Helper function to extract users
 const extractUsers = (data) =>
   data?.map((item) => ({
@@ -90,6 +95,7 @@ const GraphContainer = () => {
   const [groups, setGroups] = useState([]);
   const [events, setEvents] = useState([]);
   const [relatesTo, setRelatesTo] = useState([]);
+  const [memberOf, setMemberOf] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -97,25 +103,31 @@ const GraphContainer = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersResponse, relatesToResponse, groupsResponse, eventsResponse] =
-        await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`),
-          axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to`
-          ),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`),
-          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/events`),
-        ]);
+      const [
+        usersResponse,
+        groupsResponse,
+        eventsResponse,
+        relatesToResponse,
+        memberOfResponse,
+      ] = await Promise.all([
+        axios.get(`${backend_url}/persons`),
+        axios.get(`${backend_url}/groups`),
+        axios.get(`${backend_url}/events`),
+        axios.get(`${backend_url}/relationship/relates-to`),
+        axios.get(`${backend_url}/relationship/member-of`),
+      ]);
 
       setUsers(extractUsers(usersResponse.data));
       setEvents(extractEvents(eventsResponse.data));
       setGroups(extractGroups(groupsResponse.data));
       setRelatesTo(relatesToResponse.data);
+      setMemberOf(memberOfResponse.data);
 
       console.log(usersResponse.data);
       console.log(eventsResponse.data);
       console.log(groupsResponse.data);
       console.log(relatesToResponse.data);
+      console.log(memberOfResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Unable to load network. Please check your connection.");
@@ -165,6 +177,7 @@ const GraphContainer = () => {
               groups={groups}
               events={events}
               relatesTo={relatesTo}
+              memberOf={memberOf}
               className="w-full h-[600px]"
             />
           )}

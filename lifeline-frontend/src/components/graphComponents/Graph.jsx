@@ -1,4 +1,3 @@
-// components/Graph.jsx
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import {
@@ -19,12 +18,20 @@ import {
 import { GraphLegend } from "./GraphLegend.jsx";
 import { GraphControls } from "./GraphControls";
 import { GraphStats } from "./GraphStats";
+// Default node configuration for fallback
+const DEFAULT_NODE_CONFIG = {
+  radius: () => 30,
+  strokeColor: "#E5E7EB",
+  icon: "M12 6v6m0 0v6m0-6h6m-6 0H6", // Plus icon as default
+  labelOffset: 35,
+};
 
 const Graph = ({
   users,
   groups,
   events,
   relatesTo,
+  memberOf,
   onNodeClick,
   title,
   description,
@@ -35,21 +42,27 @@ const Graph = ({
   const [legendVisible, setLegendVisible] = useState(true);
   const [selectedNodeInfo, setSelectedNodeInfo] = useState(null);
 
-  useEffect(() => {
-    if (users.length > 0 || groups.length > 0 || events.length > 0) {
-      const cleanup = createGraph();
-      return cleanup;
+  // Validate and get node configuration
+  const getNodeConfig = (type) => {
+    if (!type || !nodeConfig[type]) {
+      console.warn(
+        `No configuration found for node type: ${type}, using default config`
+      );
+      return DEFAULT_NODE_CONFIG;
     }
-  }, [users, groups, events, relatesTo, isLocked]);
+    return {
+      ...DEFAULT_NODE_CONFIG,
+      ...nodeConfig[type],
+    };
+  };
 
   const createGraph = () => {
     const width = window.innerWidth * 0.9;
     const height = window.innerHeight * 0.8;
 
-    // Clear previous SVG
+    // Clear existing SVG
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Create SVG with zoom capability
     const svg = d3
       .select(svgRef.current)
       .append("svg")
@@ -68,17 +81,32 @@ const Graph = ({
     const svgContainer = svg.append("g");
     createGradientDefs(svg, nodeConfig);
 
-    const { nodes, edges } = prepareGraphData(users, groups, events, relatesTo);
+    // Prepare graph data with validation
+    const { nodes, edges } = prepareGraphData(
+      users,
+      groups,
+      events,
+      relatesTo,
+      memberOf
+    );
 
-    // Create force simulation
+    // Validate nodes
+    const validNodes = nodes.filter((node) => {
+      if (!node.type) {
+        console.warn(`Node missing type:`, node);
+        return false;
+      }
+      return true;
+    });
+
     const simulation = d3
-      .forceSimulation(nodes)
+      .forceSimulation(validNodes)
       .force("link", d3.forceLink(edges).distance(200))
       .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide().radius(80));
 
-    // Add links
+    // Create edges
     const link = svgContainer
       .append("g")
       .attr("class", "links")
@@ -87,15 +115,19 @@ const Graph = ({
       .enter()
       .append("path")
       .attr("class", "link")
-      .attr(
-        "stroke",
-        (d) =>
-          relatesToConfig[d.relatesTo]?.color || relatesToConfig.default.color
-      )
-      .attr("stroke-width", (d) => Math.sqrt(d.level / 5))
+      .attr("stroke", (d) => {
+        if (d.type === "RELATES_TO") {
+          return (
+            relatesToConfig[d.relatesTo]?.color || relatesToConfig.default.color
+          );
+        } else if (d.type === "MEMBER_OF") {
+          return "#3F51B5";
+        }
+        return "#E5E7EB"; // Default color
+      })
+      .attr("stroke-width", (d) => Math.sqrt((d.level || 1) / 5))
       .attr("stroke-opacity", 0.6)
       .attr("fill", "none")
-      // components/Graph.jsx (continued)
       .attr("marker-mid", "url(#arrow)");
 
     const dragHandlers = createDragHandlers(
@@ -104,12 +136,13 @@ const Graph = ({
       height,
       isLocked
     );
-    // Create node groups
+
+    // Create nodes with error handling
     const nodeGroups = svgContainer
       .append("g")
       .attr("class", "nodes")
       .selectAll(".node-group")
-      .data(nodes)
+      .data(validNodes)
       .enter()
       .append("g")
       .attr("class", "node-group")
@@ -121,38 +154,70 @@ const Graph = ({
           .on("end", dragHandlers.dragEnded)
       );
 
-    // Add node circles with gradients
+    // Add circles with safe access to node config
     nodeGroups
       .append("circle")
       .attr("r", (d) => {
-        const connectionCount = edges.filter(
-          (e) => e.source.id === d.id || e.target.id === d.id
-        ).length;
-        return Math.max(30, Math.min(50, 20 + connectionCount * 3));
+        const config = getNodeConfig(d.type);
+        return config.radius(d);
       })
-      .attr("fill", (d) => `url(#gradient-${d.type})`)
-      .attr("stroke", (d) => nodeConfig[d.type].hoverColor)
+      .attr("fill", (d) => `url(#gradient-${d.type || "default"})`)
+      .attr("stroke", (d) => getNodeConfig(d.type).strokeColor)
       .attr("stroke-width", 2)
-      .attr("filter", "url(#drop-shadow)");
+      .attr("filter", "url(#drop-shadow)")
+      .attr("class", "transition-all duration-200 ease-in-out")
+      .on("mouseover", function (event, d) {
+        const config = getNodeConfig(d.type);
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("fill", `url(#gradient-${d.type || "default"}-hover)`)
+          .attr("stroke-width", 3)
+          .attr("r", () => config.radius(d) * 1.1);
+      })
+      .on("mouseout", function (event, d) {
+        const config = getNodeConfig(d.type);
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("fill", `url(#gradient-${d.type || "default"})`)
+          .attr("stroke-width", 2)
+          .attr("r", () => config.radius(d));
+      });
 
-    // Add node labels
+    // Add icons
+    nodeGroups
+      .append("path")
+      .attr("d", (d) => getNodeConfig(d.type).icon)
+      .attr("fill", "white")
+      .attr("transform", "translate(-12, -12) scale(1)")
+      .attr("class", "pointer-events-none");
+
+    // Add labels
     nodeGroups
       .append("text")
-      .attr("dy", 40)
+      .attr("dy", (d) => getNodeConfig(d.type).labelOffset)
       .attr("text-anchor", "middle")
-      .attr("class", "text-sm font-medium")
-      .attr("fill", "#374151")
-      .text((d) => d.name);
+      .attr("class", "text-sm font-medium pointer-events-none")
+      .attr("fill", "#1F2937")
+      .text((d) => d.name || "Unnamed")
+      .each(function (d) {
+        const text = d3.select(this);
+        const words = (d.name || "Unnamed").split(/\s+/);
+        if (words.length > 2) {
+          text.text(words.slice(0, 2).join(" ") + "...");
+        }
+      });
 
-    // Add hover effects and tooltips
+    // Add event handlers
     nodeGroups
       .on("mouseover", handleNodeMouseOver)
       .on("mouseout", handleNodeMouseOut)
       .on("click", (event, d) => onNodeClick && onNodeClick(d));
 
+    // Handle simulation
     if (!isLocked) {
       simulation.on("tick", () => {
-        // Update link positions with curved paths
         link.attr("d", (d) => {
           const dx = d.target.x - d.source.x;
           const dy = d.target.y - d.source.y;
@@ -160,7 +225,6 @@ const Graph = ({
           return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
         });
 
-        // Update node positions
         nodeGroups.attr("transform", (d) => {
           d.x = Math.max(60, Math.min(width - 60, d.x));
           d.y = Math.max(60, Math.min(height - 60, d.y));
@@ -177,7 +241,6 @@ const Graph = ({
   };
 
   const handleNodeMouseOver = (event, d) => {
-    // Highlight node
     d3.select(event.currentTarget)
       .select("circle")
       .transition()
@@ -185,12 +248,10 @@ const Graph = ({
       .attr("stroke-width", 4)
       .attr("filter", "url(#drop-shadow)");
 
-    // Get connections for this node
     const connections = relatesTo.filter(
       (rel) => rel.a.properties.id === d.id || rel.b.properties.id === d.id
     );
 
-    // Update the fixed info panel content
     d3.select("#node-info-title").text(d.name || "Node Info");
     d3.select("#node-info-content").html(`
       <div class="mb-1">Type: ${
