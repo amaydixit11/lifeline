@@ -20,10 +20,13 @@ import { GraphControls } from "./GraphControls";
 import { GraphStats } from "./GraphStats";
 // Default node configuration for fallback
 const DEFAULT_NODE_CONFIG = {
-  radius: () => 30,
-  strokeColor: "#E5E7EB",
-  icon: "M12 6v6m0 0v6m0-6h6m-6 0H6", // Plus icon as default
-  labelOffset: 35,
+  gradient: {
+    startColor: "#E5E7EB",
+    endColor: "#9CA3AF",
+  },
+  strokeColor: "#6B7280",
+  radius: (d) => 35,
+  hoverColor: "#4B5563",
 };
 
 const Graph = ({
@@ -42,21 +45,28 @@ const Graph = ({
   const [legendVisible, setLegendVisible] = useState(true);
   const [selectedNodeInfo, setSelectedNodeInfo] = useState(null);
 
-  // Validate and get node configuration
-  const getNodeConfig = (type) => {
-    if (!type || !nodeConfig[type]) {
-      console.warn(
-        `No configuration found for node type: ${type}, using default config`
-      );
-      return DEFAULT_NODE_CONFIG;
-    }
-    return {
-      ...DEFAULT_NODE_CONFIG,
-      ...nodeConfig[type],
-    };
+  const getNodeConfig = (type, edges) => {
+    console.log("d.type", type);
+    // Use our default config object defined above
+    // if (!type || !DEFAULT_NODE_CONFIG[type]) {
+    //   console.warn(
+    //     `No configuration found for node type: ${type}, using default config`
+    //   );
+    //   return DEFAULT_NODE_CONFIG.default;
+    // }
+    console.log("nodeConfig[type]: ", nodeConfig(edges)[type]);
+    return nodeConfig(edges)[type];
   };
 
   const createGraph = () => {
+    console.log("Creating graph with data:", {
+      users,
+      groups,
+      events,
+      relatesTo,
+      memberOf,
+    });
+
     const width = window.innerWidth * 0.9;
     const height = window.innerHeight * 0.8;
 
@@ -67,21 +77,27 @@ const Graph = ({
       .select(svgRef.current)
       .append("svg")
       .attr("width", width)
-      .attr("height", height)
-      .call(
-        d3
-          .zoom()
-          .scaleExtent([0.5, 5])
-          .on("zoom", (event) => {
-            svgContainer.attr("transform", event.transform);
-            setZoomLevel(event.transform.k);
-          })
-      );
+      .attr("height", height);
+
+    console.log("Created SVG element:", svg.node());
+
+    // Add zoom behavior
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.5, 5])
+      .on("zoom", (event) => {
+        svgContainer.attr("transform", event.transform);
+        setZoomLevel(event.transform.k);
+      });
+
+    svg.call(zoom);
 
     const svgContainer = svg.append("g");
+    console.log("Created SVG container:", svgContainer.node());
+
     createGradientDefs(svg, nodeConfig);
 
-    // Prepare graph data with validation
+    // Prepare graph data with validation and logging
     const { nodes, edges } = prepareGraphData(
       users,
       groups,
@@ -89,6 +105,8 @@ const Graph = ({
       relatesTo,
       memberOf
     );
+
+    console.log("Prepared graph data:", { nodes, edges });
 
     // Validate nodes
     const validNodes = nodes.filter((node) => {
@@ -99,6 +117,8 @@ const Graph = ({
       return true;
     });
 
+    console.log("Valid nodes:", validNodes);
+
     const simulation = d3
       .forceSimulation(validNodes)
       .force("link", d3.forceLink(edges).distance(200))
@@ -106,7 +126,9 @@ const Graph = ({
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide().radius(80));
 
-    // Create edges
+    console.log("Created simulation:", simulation);
+
+    // Create edges with logging
     const link = svgContainer
       .append("g")
       .attr("class", "links")
@@ -130,6 +152,8 @@ const Graph = ({
       .attr("fill", "none")
       .attr("marker-mid", "url(#arrow)");
 
+    console.log("Created links:", link.nodes().length);
+
     const dragHandlers = createDragHandlers(
       simulation,
       width,
@@ -137,7 +161,7 @@ const Graph = ({
       isLocked
     );
 
-    // Create nodes with error handling
+    // Create nodes with logging
     const nodeGroups = svgContainer
       .append("g")
       .attr("class", "nodes")
@@ -145,50 +169,39 @@ const Graph = ({
       .data(validNodes)
       .enter()
       .append("g")
-      .attr("class", "node-group")
-      .call(
-        d3
-          .drag()
-          .on("start", dragHandlers.dragStarted)
-          .on("drag", dragHandlers.dragged)
-          .on("end", dragHandlers.dragEnded)
-      );
+      .attr("class", "node-group");
 
-    // Add circles with safe access to node config
-    nodeGroups
+    console.log("Created node groups:", nodeGroups.nodes().length);
+
+    // Add drag behavior
+    nodeGroups.call(
+      d3
+        .drag()
+        .on("start", dragHandlers.dragStarted)
+        .on("drag", dragHandlers.dragged)
+        .on("end", dragHandlers.dragEnded)
+    );
+
+    // Add circles
+    const circles = nodeGroups
       .append("circle")
       .attr("r", (d) => {
-        const config = getNodeConfig(d.type);
+        const config = getNodeConfig(d.type, edges);
+        console.log("Node radius for type:", d.type, config.radius(d));
         return config.radius(d);
       })
       .attr("fill", (d) => `url(#gradient-${d.type || "default"})`)
-      .attr("stroke", (d) => getNodeConfig(d.type).strokeColor)
+      .attr("stroke", (d) => getNodeConfig(d.type, edges).strokeColor)
       .attr("stroke-width", 2)
       .attr("filter", "url(#drop-shadow)")
-      .attr("class", "transition-all duration-200 ease-in-out")
-      .on("mouseover", function (event, d) {
-        const config = getNodeConfig(d.type);
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("fill", `url(#gradient-${d.type || "default"}-hover)`)
-          .attr("stroke-width", 3)
-          .attr("r", () => config.radius(d) * 1.1);
-      })
-      .on("mouseout", function (event, d) {
-        const config = getNodeConfig(d.type);
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("fill", `url(#gradient-${d.type || "default"})`)
-          .attr("stroke-width", 2)
-          .attr("r", () => config.radius(d));
-      });
+      .attr("class", "transition-all duration-200 ease-in-out");
+
+    console.log("Created circles:", circles.nodes().length);
 
     // Add icons
     nodeGroups
       .append("path")
-      .attr("d", (d) => getNodeConfig(d.type).icon)
+      .attr("d", (d) => getNodeConfig(d.type, edges).icon)
       .attr("fill", "white")
       .attr("transform", "translate(-12, -12) scale(1)")
       .attr("class", "pointer-events-none");
@@ -196,7 +209,7 @@ const Graph = ({
     // Add labels
     nodeGroups
       .append("text")
-      .attr("dy", (d) => getNodeConfig(d.type).labelOffset)
+      .attr("dy", (d) => getNodeConfig(d.type, edges).labelOffset)
       .attr("text-anchor", "middle")
       .attr("class", "text-sm font-medium pointer-events-none")
       .attr("fill", "#1F2937")
@@ -209,13 +222,7 @@ const Graph = ({
         }
       });
 
-    // Add event handlers
-    nodeGroups
-      .on("mouseover", handleNodeMouseOver)
-      .on("mouseout", handleNodeMouseOut)
-      .on("click", (event, d) => onNodeClick && onNodeClick(d));
-
-    // Handle simulation
+    // Add simulation tick handler
     if (!isLocked) {
       simulation.on("tick", () => {
         link.attr("d", (d) => {
@@ -239,6 +246,13 @@ const Graph = ({
       simulation.stop();
     };
   };
+
+  useEffect(() => {
+    console.log("useEffect triggered");
+    if (svgRef.current) {
+      createGraph();
+    }
+  }, [users, groups, events, relatesTo, memberOf, isLocked]);
 
   const handleNodeMouseOver = (event, d) => {
     d3.select(event.currentTarget)
