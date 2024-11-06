@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 import Graph from "@/components/graphComponents/Graph";
 
-const backend_url =
-  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
-    ? "http://localhost:8080"
-    : process.env.NEXT_PUBLIC_BACKEND_URL;
+const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
+// process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+//   ? "http://localhost:8080"
+//   : process.env.NEXT_PUBLIC_BACKEND_URL;
 // Helper function to extract users
 const extractUsers = (data) =>
   data?.map((item) => ({
