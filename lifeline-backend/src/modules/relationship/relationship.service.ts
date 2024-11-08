@@ -74,6 +74,7 @@ export class RelationshipService {
       this.logger.log(
         `Created MEMBER_OF relationship for user ${userId} in group ${groupId}`,
       );
+      this.logger.log(`result: ${result}`);
       return result;
     } catch (error) {
       this.logger.error('Failed to create MEMBER_OF relationship', error.stack);
@@ -455,6 +456,46 @@ export class RelationshipService {
       );
       throw new InternalServerErrorException(
         'Failed to retrieve INVOLVED_IN relationship',
+      );
+    }
+  }
+
+  async getAllInvolvedIn() {
+    const query = `
+      MATCH (u:Person)-[r:INVOLVED_IN]->(e:Event)
+      RETURN u, e, r
+    `;
+
+    try {
+      const result = await this.neo4jService.runCypher(query);
+      this.logger.log(`Neo4j query result: ${JSON.stringify(result)}`);
+
+      if (result && result.length > 0) {
+        this.logger.log(`Retrieved all INVOLVED_IN relationships`);
+        this.logger.log(`Results: ${JSON.stringify(result)}`);
+        result.forEach((rel) => {
+          const startNode = rel.u.properties;
+          const endNode = rel.e.properties;
+          const relationship = rel.r.properties;
+
+          this.logger.log(`Each Result: ${JSON.stringify(rel)}`);
+          this.logger.log(
+            `Relationship from ${startNode.name} to ${endNode.name}:`,
+            relationship,
+          );
+        });
+        return result;
+      } else {
+        this.logger.warn(`No INVOLVED_IN relationships found`);
+        return []; // Return an empty array if no relationships are found
+      }
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve INVOLVED_IN relationships',
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to retrieve INVOLVED_IN relationships',
       );
     }
   }

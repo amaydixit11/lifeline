@@ -13,6 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "lucide-react";
 
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
 const AddEvent = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -76,10 +80,7 @@ const AddEvent = () => {
     };
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/events`,
-        newEvent
-      );
+      const response = await axios.post(`${backend_url}/events`, newEvent);
       console.log(response);
 
       toast({

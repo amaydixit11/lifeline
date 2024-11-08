@@ -11,7 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const extractNodes = (data) =>
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
+
+const extractGroupNodes = (data) =>
+  data?.map((item) => ({
+    id: item.g.properties.id,
+    name: item.g.properties.name,
+  })) || [];
+const extractPersonNodes = (data) =>
   data?.map((item) => ({
     id: item.p.properties.id,
     name: item.p.properties.name,
@@ -28,39 +38,45 @@ const AddMemberOf = () => {
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
+    console.log("Fetching groups from backend...");
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`
-      );
-      setGroups(extractNodes(response.data));
+      const response = await axios.get(`${backend_url}/groups`);
+      const groupData = extractGroupNodes(response.data);
+      console.log("Fetched groups:", groupData);
+      setGroups(groupData);
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
       setLoading(false);
+      console.log("Finished fetching groups.");
     }
   }, []);
 
   const fetchPersons = useCallback(async () => {
     setLoading(true);
+    console.log("Fetching persons from backend...");
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`
-      );
-      setPersons(extractNodes(response.data));
+      const response = await axios.get(`${backend_url}/persons`);
+      const personData = extractPersonNodes(response.data);
+      console.log("Fetched persons:", personData);
+      setPersons(personData);
     } catch (error) {
       console.error("Error fetching persons:", error);
     } finally {
       setLoading(false);
+      console.log("Finished fetching persons.");
     }
   }, []);
 
   useEffect(() => {
+    console.log("Calling fetchGroups and fetchPersons...");
     fetchGroups();
     fetchPersons();
   }, [fetchGroups, fetchPersons]);
 
   const handleAddMemberOf = async () => {
     if (!groupId || !personId) {
+      console.warn("Group ID or Person ID is missing, aborting request.");
       return;
     }
 
@@ -69,13 +85,20 @@ const AddMemberOf = () => {
       endDate,
     };
 
+    console.log("Submitting new membership:", {
+      groupId,
+      personId,
+      membershipData,
+    });
+
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/member-of/${groupId}/${personId}`,
+        `${backend_url}/relationship/member-of/${personId}/${groupId}`,
         membershipData
       );
 
       // Reset form
+      console.log("Membership added successfully. Resetting form...");
       setGroupId("");
       setPersonId("");
       setStartDate("");
@@ -94,7 +117,13 @@ const AddMemberOf = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block mb-2">Group</label>
-            <Select value={groupId} onValueChange={setGroupId}>
+            <Select
+              value={groupId}
+              onValueChange={(value) => {
+                console.log("Group selected:", value);
+                setGroupId(value);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Group" />
               </SelectTrigger>
@@ -110,7 +139,13 @@ const AddMemberOf = () => {
 
           <div>
             <label className="block mb-2">Person</label>
-            <Select value={personId} onValueChange={setPersonId}>
+            <Select
+              value={personId}
+              onValueChange={(value) => {
+                console.log("Person selected:", value);
+                setPersonId(value);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select Person" />
               </SelectTrigger>
@@ -131,7 +166,10 @@ const AddMemberOf = () => {
             <Input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                console.log("Start date set to:", e.target.value);
+                setStartDate(e.target.value);
+              }}
             />
           </div>
 
@@ -140,7 +178,10 @@ const AddMemberOf = () => {
             <Input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                console.log("End date set to:", e.target.value);
+                setEndDate(e.target.value);
+              }}
             />
           </div>
         </div>

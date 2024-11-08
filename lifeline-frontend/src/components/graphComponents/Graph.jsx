@@ -147,7 +147,7 @@ const Graph = ({
         }
         return "#E5E7EB"; // Default color
       })
-      .attr("stroke-width", (d) => Math.sqrt((d.level || 1) / 5))
+      .attr("stroke-width", (d) => Math.sqrt((d.level || 100) / 5))
       .attr("stroke-opacity", 0.6)
       .attr("fill", "none")
       .attr("marker-mid", "url(#arrow)");

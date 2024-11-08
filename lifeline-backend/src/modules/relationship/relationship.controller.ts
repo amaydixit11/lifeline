@@ -285,22 +285,6 @@ export class RelationshipController {
     }
   }
 
-  @Get('member-of/')
-  async getAllMemberOf() {
-    this.logger.log(`Retrieving all MEMBER_OF relationships`);
-    try {
-      return await this.relationshipService.getAllMemberOf();
-    } catch (error) {
-      this.logger.error(
-        `Failed to retrieve MEMBER_OF relationships`,
-        error.stack,
-      );
-      throw new InternalServerErrorException(
-        'Failed to retrieve MEMBER_OF relationships',
-      );
-    }
-  }
-
   // Get MEMBER_OF relationship
   @Get('member-of/:userId/:groupId')
   async getMemberOf(
@@ -319,6 +303,21 @@ export class RelationshipController {
       );
       throw new InternalServerErrorException(
         'Failed to retrieve MEMBER_OF relationship',
+      );
+    }
+  }
+  @Get('member-of/')
+  async getAllMemberOf() {
+    this.logger.log(`Retrieving all MEMBER_OF relationships`);
+    try {
+      return await this.relationshipService.getAllMemberOf();
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve MEMBER_OF relationships`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to retrieve MEMBER_OF relationships',
       );
     }
   }
@@ -341,6 +340,21 @@ export class RelationshipController {
       );
       throw new InternalServerErrorException(
         'Failed to retrieve INVOLVED_IN relationship',
+      );
+    }
+  }
+  @Get('involved-in/')
+  async getAllInvolvedIn() {
+    this.logger.log(`Retrieving all INVOLVED_IN relationships`);
+    try {
+      return await this.relationshipService.getAllInvolvedIn();
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve INVOLVED_IN relationships`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to retrieve INVOLVED_IN relationships',
       );
     }
   }

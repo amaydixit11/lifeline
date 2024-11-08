@@ -11,6 +11,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
 
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
+
 const AddUser = () => {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,10 +39,7 @@ const AddUser = () => {
     };
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`,
-        newUser
-      );
+      const response = await axios.post(`${backend_url}/persons`, newUser);
       console.log("Person added:", response);
 
       toast({

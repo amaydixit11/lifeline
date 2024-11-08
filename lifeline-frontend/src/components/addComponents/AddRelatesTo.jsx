@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
+
 const extractUsers = (data) =>
   data?.map((item) => ({
     id: item.p.properties.id,
@@ -43,9 +48,7 @@ const AddRelatedTo = () => {
     console.log(loading);
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`
-      );
+      const response = await axios.get(`${backend_url}/persons`);
       setUsers(extractUsers(response.data));
     } catch (error) {
       console.error("Error fetching persons:", error);
@@ -84,7 +87,7 @@ const AddRelatedTo = () => {
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to/${fromUserId}/${toUserId}`,
+        `${backend_url}/relationship/relates-to/${fromUserId}/${toUserId}`,
         newRelatedTo
       );
 

@@ -12,6 +12,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Users } from "lucide-react";
 
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT == "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
+
 const AddGroup = () => {
   const [groupName, setGroupName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,10 +41,7 @@ const AddGroup = () => {
     };
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/groups`,
-        newGroup
-      );
+      const response = await axios.post(`${backend_url}/groups`, newGroup);
       console.log("Group added:", response);
 
       toast({

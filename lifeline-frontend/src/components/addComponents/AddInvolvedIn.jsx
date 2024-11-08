@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
@@ -11,44 +9,47 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
-const extractUsers = (data) =>
+const backend_url =
+  process.env.NEXT_PUBLIC_ENVIRONMENT === "development"
+    ? "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_BACKEND_URL;
+
+const extractPersons = (data) =>
   data?.map((item) => ({
     id: item.p.properties.id,
     name: item.p.properties.name,
   })) || [];
+const extractEvents = (data) =>
+  data?.map((item) => ({
+    id: item.e.properties.id,
+    name: item.e.properties.name,
+  })) || [];
 
 const InvolvedInTypes = [
-  "Friend",
-  "Family",
-  "Colleague",
-  "Mentor",
-  "Mentee",
-  "Partner",
-  "Associate",
+  "Main Role",
+  "Side Role",
+  "Cameo",
+  "Supporting Character",
 ];
 
 const AddInvolvedIn = () => {
-  const [users, setUsers] = useState([]);
-  const [fromUserId, setFromUserId] = useState("");
-  const [toUserId, setToUserId] = useState("");
+  const [persons, setPersons] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [personId, setPersonId] = useState("");
+  const [eventId, setEventId] = useState("");
   const [involvedIn, setInvolvedIn] = useState("");
-  const [level, setLevel] = useState(50);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
-    console.log(loading);
+  const fetchPersons = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/persons`
-      );
-      setUsers(extractUsers(response.data));
+      const response = await axios.get(`${backend_url}/persons`);
+      setPersons(extractPersons(response.data));
     } catch (error) {
       console.error("Error fetching persons:", error);
     } finally {
@@ -56,32 +57,45 @@ const AddInvolvedIn = () => {
     }
   }, []);
 
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${backend_url}/events`);
+      setEvents(extractEvents(response.data));
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    console.log("Calling fetchEvents and fetchPersons...");
+    fetchEvents();
+    fetchPersons();
+  }, [fetchEvents, fetchPersons]);
 
   const handleAddInvolvedIn = async () => {
-    if (!fromUserId || !toUserId || !involvedIn) {
+    if (!personId || !eventId || !involvedIn) {
       return;
     }
 
     const newInvolvedIn = {
       startDate,
       endDate,
-      relationship: involvedIn,
-      level,
+      role: involvedIn,
     };
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/relationship/relates-to/${fromUserId}/${toUserId}`,
+        `${backend_url}/relationship/involved-in/${personId}/${eventId}`,
         newInvolvedIn
       );
 
-      setFromUserId("");
-      setToUserId("");
+      // Reset form
+      setPersonId("");
+      setEventId("");
       setInvolvedIn("");
-      setLevel(50);
       setStartDate("");
       setEndDate("");
     } catch (error) {
@@ -92,20 +106,20 @@ const AddInvolvedIn = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add InvolvedIn</CardTitle>
+        <CardTitle>Add Involved In</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block mb-2">From User</label>
-            <Select value={fromUserId} onValueChange={setFromUserId}>
+            <label className="block mb-2">Person</label>
+            <Select value={personId} onValueChange={setPersonId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select From User" />
+                <SelectValue placeholder="Select Person" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                {persons.map((person) => (
+                  <SelectItem key={person.id} value={person.id}>
+                    {person.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -113,15 +127,15 @@ const AddInvolvedIn = () => {
           </div>
 
           <div>
-            <label className="block mb-2">To User</label>
-            <Select value={toUserId} onValueChange={setToUserId}>
+            <label className="block mb-2">Event</label>
+            <Select value={eventId} onValueChange={setEventId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select To User" />
+                <SelectValue placeholder="Select Event" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                {events.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -130,10 +144,10 @@ const AddInvolvedIn = () => {
         </div>
 
         <div>
-          <label className="block mb-2">InvolvedIn Type</label>
+          <label className="block mb-2">Involved In Type</label>
           <Select value={involvedIn} onValueChange={setInvolvedIn}>
             <SelectTrigger>
-              <SelectValue placeholder="Select InvolvedIn" />
+              <SelectValue placeholder="Select Involved In" />
             </SelectTrigger>
             <SelectContent>
               {InvolvedInTypes.map((type) => (
@@ -143,16 +157,6 @@ const AddInvolvedIn = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div>
-          <label className="block mb-2">InvolvedIn Strength ({level}%)</label>
-          <Slider
-            defaultValue={[50]}
-            max={100}
-            step={1}
-            onValueChange={(value) => setLevel(value[0])}
-          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -179,7 +183,7 @@ const AddInvolvedIn = () => {
           onClick={handleAddInvolvedIn}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
-          Add InvolvedIn
+          Add Involved In
         </Button>
       </CardContent>
     </Card>
